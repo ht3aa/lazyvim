@@ -3,6 +3,3 @@ require("config.lazy")
 
 -- to make tailwind works properly
 require("lspconfig").tailwindcss.setup({})
-
---- hlleo
---- hhh
