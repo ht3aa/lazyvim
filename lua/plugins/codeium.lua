@@ -2,5 +2,7 @@ return {
   "Exafunction/codeium.nvim",
   cmd = "Codeium",
   build = ":Codeium Auth",
-  opts = {},
+  opts = {
+    enable_chat = true,
+  },
 }
