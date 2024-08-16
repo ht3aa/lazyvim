@@ -30,3 +30,9 @@ vim.keymap.set("n", "<A-j>", ":m .+1<CR>==", opts)
 vim.keymap.set("n", "<A-k>", ":m .-2<CR>==", opts)
 
 vim.keymap.set("n", "<leader>U", vim.cmd.UndotreeToggle)
+vim.keymap.set(
+  "n",
+  "<leader>ht",
+  ":lua List_todo_projects()<CR>",
+  { noremap = true, silent = true, desc = "hasanweb todo" }
+)
