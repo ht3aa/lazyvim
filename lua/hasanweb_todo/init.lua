@@ -4,19 +4,54 @@ local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 local conf = require("telescope.config").values
 local Path = require("plenary.path")
-todos_directory = "/home/hasanweb/.config/nvim/lua/hasanweb_todo/todos"
-audio_file_path = "/home/hasanweb/.config/nvim/lua/hasanweb_todo/success.mp3"
 
-print("Todos directory: " .. todos_directory)
+math.randomseed(os.time())
+
+todos_directory = os.getenv("HOME") .. "/.config/nvim/lua/hasanweb_todo/todos"
+success_audios_directory = os.getenv("HOME") .. "/.config/nvim/lua/hasanweb_todo/audios/success"
 
 local keys = {
-  n = "<C-n>",
-  a = "<C-c>",
+  new_folder = "<C-n>",
+  a = "<C-t>",
   d = "<C-d>",
   o = "<C-o>",
   b = "<C-u>",
   l = "<C-l>",
+  r = "<C-r>",
+  copy = "<C-c>",
 }
+
+local function stop_all_playback()
+  -- Command to stop all instances of the audio player; adjust as needed for your system
+  os.execute("pkill -f 'play'") -- This will stop any process running `play`
+end
+
+local function play_audio(file_path)
+  -- Play the audio file in the background
+  os.execute("play " .. file_path .. " > /dev/null 2>&1 &")
+end
+
+local function get_file_paths(directory)
+  local paths = {}
+  local handle = io.popen('ls -p "' .. directory .. '" | grep -v /') -- List files only
+  local file_list = handle:read("*a")
+  handle:close()
+
+  for file in file_list:gmatch("[^\r\n]+") do
+    table.insert(paths, directory .. "/" .. file)
+  end
+
+  return paths
+end
+
+local function get_random_path(paths)
+  if #paths == 0 then
+    return nil
+  end
+  -- Seed the random number generator
+  math.randomseed(os.time())
+  return paths[math.random(#paths)]
+end
 
 local get_folder_name = function(folder, path)
   local parts = {}
@@ -108,7 +143,7 @@ function List_md_file_lines(md_file_path, project_name, opts)
       sorter = conf.generic_sorter(opts),
       attach_mappings = function(prompt_bufnr, map)
         -- Create a new line
-        map("i", keys.n, function()
+        map("i", keys.new_folder, function()
           actions.close(prompt_bufnr)
           local new_line = "⏱️  " .. vim.fn.input("New line: ")
           table.insert(lines, new_line)
@@ -137,7 +172,8 @@ function List_md_file_lines(md_file_path, project_name, opts)
 
           -- Toggle logic for checkbox
           if string.match(selection.value, "%⏱️ ") then
-            os.execute("play " .. audio_file_path .. " > /dev/null 2>&1 &")
+            stop_all_playback()
+            play_audio(get_random_path(get_file_paths(success_audios_directory)))
             lines[selection.index] = string.gsub(selection.value, "%⏱️ ", "✅")
           elseif string.match(selection.value, "%✅") then
             lines[selection.index] = string.gsub(selection.value, "%✅", "%⏱️ ")
@@ -149,6 +185,19 @@ function List_md_file_lines(md_file_path, project_name, opts)
 
         map("n", "<space>", toggle_todo)
         map("i", "<space>", toggle_todo)
+
+        map("i", keys.r, function()
+          local selection = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          local updated_line = vim.fn.input("Update line: ", selection.value)
+
+          -- Update the selected line with new content
+          lines[selection.index] = updated_line
+          write_md_file(md_file_path, lines)
+
+          -- Refresh the list
+          List_md_file_lines(md_file_path, project_name)
+        end)
 
         return true
       end,
@@ -171,7 +220,7 @@ function List_todo_dates(project_name)
       sorter = conf.generic_sorter(opts),
       attach_mappings = function(prompt_bufnr, map)
         -- Create a new folder
-        map("i", keys.n, function()
+        map("i", keys.new_folder, function()
           actions.close(prompt_bufnr)
           local folder_name = vim.fn.input("New folder name: ")
           local new_folder = Path:new(path .. "/" .. folder_name)
@@ -240,6 +289,46 @@ function List_todo_dates(project_name)
           vim.cmd("e " .. md_file_path)
         end)
 
+        -- Rename the selected folder, using the old folder name as the default input
+        map("i", keys.r, function()
+          local selection = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          local old_folder_name = selection[1]
+          local old_folder_path = Path:new(path .. "/" .. old_folder_name)
+          local new_folder_name = vim.fn.input("New folder name: ", old_folder_name) -- Use the old name as default
+
+          -- Rename the folder
+          local new_folder_path = Path:new(path .. "/" .. new_folder_name)
+          if old_folder_path:exists() then
+            os.rename(old_folder_path:absolute(), new_folder_path:absolute())
+            print("Renamed folder to " .. new_folder_name)
+          else
+            print("Folder does not exist.")
+          end
+
+          List_todo_dates(project_name) -- Refresh after renaming
+        end)
+
+        -- Copy all lines from the markdown file to the system clipboard with the current date
+        map("i", keys.copy, function()
+          local selection = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          local md_file_path = path .. "/" .. selection[1] .. "/todo.md"
+
+          check_md_file_exists(md_file_path, selection)
+
+          -- Read the markdown file lines
+          local lines = get_md_file_lines(md_file_path)
+
+          -- Add the current date to the beginning of the content
+          local current_date = os.date("%Y-%m-%d")
+          table.insert(lines, 1, "Date: " .. current_date)
+
+          -- Copy the content (including the date) to the system clipboard as separate lines
+          vim.fn.setreg("+", lines)
+          print("Copied markdown content with date to clipboard.")
+        end)
+
         return true
       end,
     })
@@ -261,7 +350,7 @@ function List_todo_projects(opts)
       sorter = conf.generic_sorter(opts),
       attach_mappings = function(prompt_bufnr, map)
         -- Create a new folder
-        map("i", keys.n, function()
+        map("i", keys.new_folder, function()
           actions.close(prompt_bufnr)
           local folder_name = vim.fn.input("New folder name: ")
           local new_folder = Path:new(path .. folder_name)
@@ -312,6 +401,25 @@ function List_todo_projects(opts)
           List_todo_dates(selection[1]) -- Refresh
         end)
 
+        -- Rename the selected folder, using the old folder name as the default input
+        map("i", keys.r, function()
+          local selection = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          local old_folder_name = selection[1]
+          local old_folder_path = Path:new(path .. "/" .. old_folder_name)
+          local new_folder_name = vim.fn.input("New folder name: ", old_folder_name) -- Use the old name as default
+
+          -- Rename the folder
+          local new_folder_path = Path:new(path .. "/" .. new_folder_name)
+          if old_folder_path:exists() then
+            os.rename(old_folder_path:absolute(), new_folder_path:absolute())
+            print("Renamed folder to " .. new_folder_name)
+          else
+            print("Folder does not exist.")
+          end
+
+          List_todo_projects() -- Refresh after renaming
+        end)
         return true
       end,
     })
