@@ -7,3 +7,5 @@ foo.*
 *.log
 data
 lua/hasanweb_todo/todos
+todos/
+lazy-lock.json

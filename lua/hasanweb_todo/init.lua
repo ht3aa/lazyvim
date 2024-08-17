@@ -4,9 +4,10 @@ local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 local conf = require("telescope.config").values
 local Path = require("plenary.path")
+todos_directory = "/home/hasanweb/.config/nvim/lua/hasanweb_todo/todos"
+audio_file_path = "/home/hasanweb/.config/nvim/lua/hasanweb_todo/success.mp3"
 
-local todos_directory = vim.fn.getcwd() .. "/lua/hasanweb_todo/todos"
-local audio_file_path = vim.fn.getcwd() .. "/lua/hasanweb_todo/success.mp3"
+print("Todos directory: " .. todos_directory)
 
 local keys = {
   n = "<C-n>",
@@ -18,7 +19,11 @@ local keys = {
 }
 
 local get_folder_name = function(folder, path)
-  return string.gsub(string.gsub(folder, path, ""), "/", "")
+  local parts = {}
+  for part in string.gmatch(folder, "[^/]+") do
+    table.insert(parts, part)
+  end
+  return parts[#parts]
 end
 
 -- Get the list of folders (dates)
@@ -29,26 +34,13 @@ local function get_folders_name(folder_name)
 
   local path = todos_directory .. "/" .. folder_name
 
-  local function run_command(cmd)
-    local handle, result
-    local success, err = pcall(function()
-      handle = io.popen(cmd)
-      result = handle:read("*a")
-      handle:close()
-    end)
-    if not success then
-      -- Error occurred, handle it here (e.g., log it or ignore it)
-      result = "" -- Set result to empty to handle the error gracefully
-    end
-    return result
-  end
-
-  local cmd = "ls -d " .. path .. "/*/"
-
-  local result = run_command(cmd)
+  local handle = io.popen("ls -d " .. path .. "/*/")
+  result = handle:read("*a")
+  handle:close()
 
   local folders = {}
   for folder in string.gmatch(result, "[^\n]+") do
+    print(folder)
     local folder_name = get_folder_name(folder, path)
     table.insert(folders, folder_name)
   end
