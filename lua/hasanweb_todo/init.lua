@@ -75,7 +75,6 @@ local function get_folders_name(folder_name)
 
   local folders = {}
   for folder in string.gmatch(result, "[^\n]+") do
-    print(folder)
     local folder_name = get_folder_name(folder, path)
     table.insert(folders, folder_name)
   end
