@@ -169,13 +169,22 @@ function List_md_file_lines(md_file_path, project_name, opts)
           local selection = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
 
-          -- Toggle logic for checkbox
+          -- Get the current date
+          local current_datetime = os.date("%Y-%m-%d %I:%M:%S %p")
+
+          -- Toggle logic for checkbox and update the date at the end of the line
           if string.match(selection.value, "%⏱️ ") then
             stop_all_playback()
             play_audio(get_random_path(get_file_paths(success_audios_directory)))
             lines[selection.index] = string.gsub(selection.value, "%⏱️ ", "✅")
+              .. " (Updated: "
+              .. current_datetime
+              .. ")"
           elseif string.match(selection.value, "%✅") then
             lines[selection.index] = string.gsub(selection.value, "%✅", "%⏱️ ")
+              .. " (Updated: "
+              .. current_datetime
+              .. ")"
           end
 
           write_md_file(md_file_path, lines)
