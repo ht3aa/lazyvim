@@ -7,3 +7,6 @@ vim.g.copilot_no_tab_map = true
 
 -- MagicDuck/grug-far.nvim leader key
 vim.g.maplocalleader = " "
+
+-- then you need to set the option below.
+vim.g.lazyvim_picker = "fzf"

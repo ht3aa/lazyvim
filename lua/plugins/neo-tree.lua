@@ -8,7 +8,6 @@ return {
         require("neo-tree.command").execute({
           toggle = true,
           source = "filesystem",
-          position = "right",
         })
       end,
       desc = "Explorer NeoTree (Root Dir)",
