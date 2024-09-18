@@ -9,7 +9,16 @@ return {
       ██╔══██║██╔══██║░╚═══██╗██╔══██║██║╚████║░░████╔═████║░██╔══╝░░██╔══██╗
       ██║░░██║██║░░██║██████╔╝██║░░██║██║░╚███║░░╚██╔╝░╚██╔╝░███████╗██████╦╝
       ╚═╝░░╚═╝╚═╝░░╚═╝╚═════╝░╚═╝░░╚═╝╚═╝░░╚══╝░░░╚═╝░░░╚═╝░░╚══════╝╚═════╝░
-    ]]
+
+      Laravel new stuff you must use
+      1- container attributes
+      2- Elquent chaperone (solve n+1 problem)
+      3- defer (send some function to the background)
+      4- cache:flexible 
+      5- concurrency facade
+      inertia
+      async requests, polling, whenVisible, infinite scroll, prefetching, deferred props
+]]
 
     logo = string.rep("\n", 8) .. logo .. "\n\n"
 

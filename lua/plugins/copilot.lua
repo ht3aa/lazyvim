@@ -14,6 +14,7 @@ return {
   opts = {
     suggestion = { enabled = true, auto_trigger = true },
     snippet = { enabled = true },
+
     completion = { enabled = true },
     panel = { enabled = true },
     filetypes = {

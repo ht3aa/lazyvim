@@ -1,12 +1,14 @@
 return {
-  { "ofirgall/ofirkai.nvim" }, -- colorscheme
-  { "sekke276/dark_flat.nvim", opts = {
-    transparent = true,
-  } },
+  {
+    "folke/tokyonight.nvim",
+    lazy = false,
+    priority = 1000,
+    opts = {},
+  },
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "dark_flat",
+      colorscheme = "tokyonight-night",
     },
   },
 }
